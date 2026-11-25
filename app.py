@@ -75,7 +75,7 @@ API_PAGE_ACCESS={
  '/damaged-meter-stock':{'damaged-meters'}, '/meter-replacements':{'meter-replace'},
  '/meter-crn-timeline':{'crn'}, '/removed-meters':{'removed'}, '/removed-meter-state':{'removed'},
  '/meter-return-request':{'removed'}, '/meter-history':{'meter-history'}, '/meter-import-audit':{'meter-import'},
- '/meter-receipts':{'meter-receipts'}, '/receipt-docs':{'meter-receipt-register','documents','archive'},
+ '/meter-receipts':{'meter-receipts'}, '/receipt-docs':{'meter-receipts','meter-receipt-register','documents','archive'},
  '/meter-issues':{'meter-issues'}, '/meter-issue-search':{'meter-issues'}, '/issue-docs':{'meter-issues','documents','archive'},
  '/meter-installs':{'meter-installs'}, '/install-docs':{'meter-installs','documents','archive'},
  '/document-detail':{'approvals','documents','archive','movements','meter-receipt-register','meter-issues','meter-installs','foreman-documents','foremen'},
@@ -118,6 +118,10 @@ def db():
                 cols={r['name'] for r in c.execute('PRAGMA table_info(meter_receipt_docs)').fetchall()}
                 if cols and 'origin' not in cols:
                     c.execute("ALTER TABLE meter_receipt_docs ADD COLUMN origin TEXT NOT NULL DEFAULT ''")
+                for table, column, definition in [('meter_receipt_lines','condition',"TEXT NOT NULL DEFAULT 'سليم'"),('meters','meter_code',"TEXT NOT NULL DEFAULT ''"),('meters','notes',"TEXT NOT NULL DEFAULT ''")]:
+                    columns={r['name'] for r in c.execute(f'PRAGMA table_info({table})')}
+                    if columns and column not in columns:
+                        c.execute(f'ALTER TABLE {table} ADD COLUMN {column} {definition}')
                 c.execute('''CREATE TABLE IF NOT EXISTS user_permissions(
                     username TEXT NOT NULL,
                     page_key TEXT NOT NULL,
@@ -1169,7 +1173,15 @@ class Handler(BaseHTTPRequestHandler):
                     else:
                         row=c.execute('SELECT username,role FROM users WHERE username=?',(username,)).fetchone()
                         if not row:return self.send(404,{'error':'المستخدم غير موجود'})
-                        if action=='role':
+                        if row['role']=='Super Admin' and user['role']!='Super Admin':return self.send(403,{'error':'لا يمكن تعديل حساب مدير النظام الأعلى'})
+                        if action=='delete':
+                            if user['role']!='Super Admin':return self.send(403,{'error':'الحذف متاح لمدير النظام الأعلى فقط'})
+                            if username==user['username']:return self.send(400,{'error':'لا يمكن حذف حسابك الحالي'})
+                            if row['role']=='Super Admin' and c.execute("SELECT COUNT(*) FROM users WHERE role='Super Admin'").fetchone()[0]<=1:return self.send(400,{'error':'لا يمكن حذف آخر مدير'})
+                            c.execute('DELETE FROM user_permissions WHERE username=?',(username,))
+                            c.execute('DELETE FROM users WHERE username=?',(username,))
+                            audit_action='USER_DELETED';record=username;old=row['role'];new=''
+                        elif action=='role':
                             role=str(data.get('role',''))
                             if role not in allowed_roles:return self.send(400,{'error':'المسمى الوظيفي المحدد غير صحيح'})
                             if role=='Super Admin' and user['role']!='Super Admin':return self.send(403,{'error':'ترقية مدير نظام أعلى متاحة لمدير النظام الأعلى فقط'})
