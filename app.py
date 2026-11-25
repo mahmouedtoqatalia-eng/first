@@ -11,6 +11,8 @@ SECURE_COOKIE=os.environ.get('SECURE_COOKIE','1')=='1'
 COOKIE_FLAGS='; HttpOnly; SameSite=Strict; Path=/'+('; Secure' if SECURE_COOKIE else '')
 WRITE_LOCK=threading.RLock()
 UI=BASE/'web_ui'
+DOWNLOADS=DB.parent/'downloads'
+APP_FILES={'windows':('EGYPT-GAS-Setup.exe','application/octet-stream'),'android':('EGYPT-GAS-Android.apk','application/vnd.android.package-archive')}
 SESSIONS={}
 PAGE_CATALOG = {
  'dashboard':'لوحة التحكم',
@@ -253,6 +255,32 @@ class Handler(BaseHTTPRequestHandler):
         return user
     def do_GET(self):
         path=urlparse(self.path).path
+        if path=='/api/app-downloads':
+            result={}
+            for key,(name,_) in APP_FILES.items():
+                f=DOWNLOADS/name
+                try:
+                    size=f.stat().st_size if f.is_file() else 0
+                except OSError: size=0
+                result[key]={'available':size>0,'size':size}
+            return self.send(200,result)
+        if path in ('/download/windows','/download/android'):
+            name,ctype=APP_FILES[path.rsplit('/',1)[1]]
+            try:
+                f=(DOWNLOADS/name).open('rb')
+            except OSError: return self.send(404,{'error':'ملف التطبيق غير متاح حالياً'})
+            with f:
+                self.send_response(200)
+                self.send_header('Content-Type',ctype)
+                self.send_header('Content-Length',str(os.fstat(f.fileno()).st_size))
+                self.send_header('Content-Disposition','attachment; filename="'+name+'"')
+                self.send_header('Cache-Control','no-store')
+                self.send_header('X-Content-Type-Options','nosniff')
+                self.end_headers()
+                import shutil
+                try: shutil.copyfileobj(f,self.wfile,1024*1024)
+                except (BrokenPipeError,ConnectionResetError): pass
+            return
         if path=='/' or path=='/index.html':
             try: data=(UI/'index.html').read_bytes()
             except OSError: return self.send(500,{'error':'ملفات الواجهة غير موجودة'})

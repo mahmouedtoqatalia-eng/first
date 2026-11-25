@@ -611,6 +611,8 @@ input[type="checkbox"],input[type="radio"]{accent-color:#d4ad5a}
 }
 </style><style>
 .modal{width:min(650px,calc(100vw - 28px))!important;box-sizing:border-box}.modal.wide{width:min(1240px,calc(100vw - 28px))!important}.modal.material-search-modal{width:min(780px,calc(100vw - 28px))!important}.modal h3{padding-bottom:14px;border-bottom:1px solid #a78343}.modal-actions{position:sticky;bottom:0;flex-wrap:wrap}.modal .field input[type=search]{width:100%;margin-bottom:10px}.doc-detail-btn{border-radius:9px!important;font-weight:700}.table-wrap thead th{position:sticky;top:0;z-index:1}.table-wrap tbody tr:hover{background:#23425b!important}tr[hidden]{display:none!important}.modal.wide td{white-space:normal;min-width:80px}.modal.wide .table-wrap{max-height:55vh;overflow:auto}.modal.wide #modalFields{overflow:auto}.modal.approval-modal{width:min(900px,calc(100vw - 28px))!important}
+
+#login .eg-downloads{margin-top:18px;padding-top:16px;border-top:1px solid #b9945045;color:#e8d5af;text-align:right} .eg-dl-heading{display:grid;gap:4px;margin-bottom:12px}.eg-dl-heading>span{font-size:9px;letter-spacing:1.6px;color:#d8b66e}.eg-dl-heading strong{font-size:17px;color:#f4e5c5}.eg-dl-heading small,.eg-dl-note{font-size:11px;color:#aebdca}.eg-dl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;direction:ltr}.eg-dl-link{display:flex;align-items:center;gap:8px;padding:12px 9px;border:1px solid #41617a;border-radius:12px;background:#10263a;color:#f3e2bd;text-decoration:none;min-width:0}.eg-dl-link svg{width:23px;height:23px;flex:none;color:#d8b66e}.eg-dl-link span:nth-child(2){display:grid;gap:4px;min-width:0}.eg-dl-link b{font-size:13px}.eg-dl-link small{font-size:10px;color:#b9c9d6;direction:rtl}.eg-dl-arrow{margin-left:auto;color:#d8b66e}.eg-dl-link[href]:hover,.eg-dl-link[href]:focus-visible{border-color:#e3bd70;background:#1b3950}.eg-dl-link[aria-disabled=true]{opacity:.55;cursor:default}.eg-dl-note{display:block;text-align:center;margin-top:10px}@media(max-width:350px){.eg-dl-grid{grid-template-columns:1fr}}
 </style></head>
 <body>
 <section class="login" id="login">
@@ -620,6 +622,12 @@ input[type="checkbox"],input[type="radio"]{accent-color:#d4ad5a}
   <div class="field"><label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required placeholder="اكتب كلمة المرور"></div>
   <button class="btn btn-gold" type="submit">دخول إلى المنظومة　↗</button><div id="loginError" style="color:#b83242;margin-top:12px;font-size:12px"></div>
   <div style="border-top:1px solid #d5dde4;margin-top:24px;padding-top:15px;text-align:center;color:#738394;font-size:11px">نظام إدارة مؤسسي — منطقة العبور</div>
+ <section class="eg-downloads" aria-label="تحميل التطبيقات">
+ <div class="eg-dl-heading"><span>APPLICATION CENTER</span><strong>حمّل تطبيق المنظومة</strong><small>نفس حسابك ونفس البيانات على كل أجهزتك</small></div>
+ <div class="eg-dl-grid">
+ <a class="eg-dl-link" id="eg-dl-windows" aria-disabled="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 4l9-1v8H2zm10-1 10-1v9H12zM2 12h9v9l-9-1zm10 0h10v10l-10-1z"/></svg><span><b>Windows</b><small id="eg-dl-windows-status">جارٍ التحقق...</small></span><span class="eg-dl-arrow">↓</span></a>
+ <a class="eg-dl-link" id="eg-dl-android" aria-disabled="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 10a7 7 0 0 1 3-6L6 1l1-.5 2 3a8 8 0 0 1 6 0l2-3 1 .5-2 3a7 7 0 0 1 3 6zM5 11h14v8H5zM2 11h2v7H2zm18 0h2v7h-2zM7 19h3v4H7zm7 0h3v4h-3z"/><circle cx="9" cy="7" r="1" fill="#10263a"/><circle cx="15" cy="7" r="1" fill="#10263a"/></svg><span><b>Android</b><small id="eg-dl-android-status">جارٍ التحقق...</small></span><span class="eg-dl-arrow">↓</span></a>
+ </div><small class="eg-dl-note">تحميل مباشر · لا يتطلب تسجيل الدخول</small></section>
  </form></div>
 </section>
 <section class="app" id="app">

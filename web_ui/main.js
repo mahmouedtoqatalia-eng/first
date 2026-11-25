@@ -1764,3 +1764,6 @@ async function addFwMaterial(){
 }
 
 function createDocumentPrintFrame(){document.getElementById('gasPrintFrame')?.remove();const f=document.createElement('iframe');f.id='gasPrintFrame';f.style.cssText='position:fixed;width:1px;height:1px;left:-10000px;top:0;border:0';document.body.append(f);return f.contentWindow;}
+
+// Public installer availability; never touches login or inventory state.
+(async()=>{try{const r=await fetch('/api/app-downloads',{cache:'no-store'});if(!r.ok)throw Error();const data=await r.json();for(const key of ['windows','android']){const a=document.getElementById('eg-dl-'+key), t=document.getElementById('eg-dl-'+key+'-status');if(!a||!t)continue;const f=data[key];if(f&&f.available){a.href='/download/'+key;a.removeAttribute('aria-disabled');t.textContent=(key==='windows'?'EXE':'APK')+' · '+(f.size/1048576).toFixed(1)+' MB';}else t.textContent='غير متاح حالياً';}}catch{for(const key of ['windows','android']){const t=document.getElementById('eg-dl-'+key+'-status');if(t)t.textContent='تعذر التحقق';}}})();
