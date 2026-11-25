@@ -16,17 +16,27 @@ function applyPagePermissions(){
  document.querySelectorAll('.nav-group').forEach(g=>{let n=g.nextElementSibling,visible=false;while(n&&!n.classList.contains('nav-group')){if(n.classList.contains('nav-btn')&&n.style.display!=='none')visible=true;n=n.nextElementSibling}g.style.display=visible?'':'none'});
  const searchBtn=document.querySelector('.top-right button[onclick*="global-search"]');if(searchBtn)searchBtn.style.display=pageAllowed('global-search')?'':'none';
 }
+const mobileNavMedia=window.matchMedia('(max-width:900px)');
+function updateSidebarButton(){
+ const app=$('#app'),btn=$('#sidebarToggle');if(!btn)return;
+ const open=mobileNavMedia.matches?app.classList.contains('mobile-nav-open'):!app.classList.contains('nav-collapsed');
+ btn.textContent=mobileNavMedia.matches?(open?'✕ إغلاق القائمة':'☰ القائمة'):(open?'◀ إخفاء القائمة':'☰ إظهار القائمة');
+ btn.title=open?'إغلاق القائمة الجانبية':'إظهار القائمة الجانبية';btn.setAttribute('aria-expanded',String(open));
+}
+function setMobileSidebar(open){
+ const active=Boolean(open&&mobileNavMedia.matches);$('#app').classList.toggle('mobile-nav-open',active);document.body.classList.toggle('mobile-nav-lock',active);updateSidebarButton();
+}
 function toggleSidebar(){
- const app=$('#app');app.classList.toggle('nav-collapsed');
- const hidden=app.classList.contains('nav-collapsed');
- const btn=$('#sidebarToggle');if(btn){btn.textContent=hidden?'☰ إظهار القائمة':'◀ إخفاء القائمة';btn.title=hidden?'إظهار القائمة الجانبية':'إخفاء القائمة الجانبية'}
+ const app=$('#app');if(mobileNavMedia.matches){setMobileSidebar(!app.classList.contains('mobile-nav-open'));return;}
+ const hidden=app.classList.toggle('nav-collapsed');updateSidebarButton();
  try{localStorage.setItem('eg_gas_sidebar_hidden',hidden?'1':'0')}catch(e){}
 }
 function restoreSidebarPreference(){
  let hidden=false;try{hidden=localStorage.getItem('eg_gas_sidebar_hidden')==='1'}catch(e){}
- $('#app').classList.toggle('nav-collapsed',hidden);
- const btn=$('#sidebarToggle');if(btn)btn.textContent=hidden?'☰ إظهار القائمة':'◀ إخفاء القائمة';
+ $('#app').classList.toggle('nav-collapsed',hidden);setMobileSidebar(false);
 }
+if(mobileNavMedia.addEventListener)mobileNavMedia.addEventListener('change',()=>setMobileSidebar(false));else mobileNavMedia.addListener(()=>setMobileSidebar(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#app').classList.contains('mobile-nav-open')){setMobileSidebar(false);$('#sidebarToggle').focus()}});
 
 async function api(path,opts={}){let r=await fetch('/api'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});let d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'حدث خطأ');return d}
 function toast(t){let x=$('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)}
@@ -1729,9 +1739,9 @@ async function addMovement(draft=null){try{
  $('#mvSend').onclick=async()=>{if(!form.reportValidity())return;const d=collect();if(!d.lines.length||d.lines.some(x=>!x.code||!Number.isFinite(Number(x.qty))||Number(x.qty)<=0)){toast('أكمل الخامة والكمية لكل بند مستخدم');return}const btn=$('#mvSend');btn.disabled=true;try{await saveDraft();const preview=document.createElement('div');preview.className='panel';preview.innerHTML=`<h3>مراجعة المستند ${esc(d.doc)}</h3><p>${esc(d.type)} · ${esc(d.foreman||d.receipt_source||'')} · ${esc(d.receipt_date||d.week||'')}</p><table><thead><tr><th>الخامة</th><th>الكمية</th></tr></thead><tbody>${d.lines.map(x=>`<tr><td>${esc(x.code)} | ${esc(active.find(a=>a.code===x.code)?.name||'')}</td><td>${esc(x.qty)}</td></tr>`).join('')}</tbody></table><div class="toolbar"><button type="button" class="btn btn-dark" id="mvBack">تعديل</button><button type="button" class="btn btn-dark" id="mvDelete">حذف المسودة</button><button type="button" class="btn btn-gold" id="mvConfirm">تأكيد الإرسال للمدير</button></div>`;const fields=$('#modalFields'),actions=form.querySelector('.modal-actions');fields.style.display='none';actions.style.display='none';form.append(preview);$('#mvBack').onclick=()=>{preview.remove();fields.style.display='';actions.style.display='';btn.disabled=false};$('#mvDelete').onclick=async()=>{if(!confirm('حذف المسودة؟'))return;try{await api('/movements-drafts',{method:'POST',body:JSON.stringify({action:'delete',id:draft.id})});closeModal();await render(currentPage)}catch(e){toast(e.message)}};$('#mvConfirm').onclick=async()=>{const b=$('#mvConfirm');b.disabled=true;try{d.draft_id=draft.id;d.lines=d.lines.map(x=>({code:x.code,qty:Number(x.qty)}));if(d.type==='وارد'){d.foreman='';d.week=d.receipt_date;if(d.receipt_source)d.notes=['جهة الوارد: '+d.receipt_source,d.notes].filter(Boolean).join(' | ')}await api('/movements',{method:'POST',body:JSON.stringify(d)});closeModal();toast('تم إرسال المستند للمدير');await render(currentPage)}catch(e){toast(e.message);b.disabled=false}}}catch(e){toast(e.message);btn.disabled=false}};
  $('#modalBack').style.display='flex';
 }catch(e){toast(e.message)}}
-async function logout(){try{await api('/logout',{method:'POST',body:'{}'})}catch(e){}$('#app').style.display='none';$('#login').style.display='grid';$('#password').value='';}
+async function logout(){setMobileSidebar(false);try{await api('/logout',{method:'POST',body:'{}'})}catch(e){}$('#app').style.display='none';$('#login').style.display='grid';$('#password').value='';}
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#loginError').textContent='';try{let u=await api('/login',{method:'POST',body:JSON.stringify({username:$('#username').value,password:$('#password').value})});await showApp(u)}catch(err){$('#loginError').textContent=err.message}});
-document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>render(b.dataset.page)));
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{setMobileSidebar(false);render(b.dataset.page)}));
 function updateSystemDateTime(){
  const now=new Date();
  const dateEl=$('#topDate'),clockEl=$('#clock');
